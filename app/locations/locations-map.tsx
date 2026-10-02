@@ -4,6 +4,8 @@ import "mapbox-gl/dist/mapbox-gl.css";
 import { useEffect, useState } from "react";
 import { Map, Marker, Popup } from "react-map-gl/mapbox";
 
+import { getDistanceFromNearestHome } from "./location-distance";
+
 interface Parkrun {
 	id: string;
 	name: string;
@@ -137,6 +139,10 @@ export default function LocationsMap({ homeLocations }: LocationsMapProps) {
 					const isHovered =
 						hoveredMarker?.type === "parkrun" &&
 						hoveredMarker.id === parkrun.id;
+					const distanceFromHome = getDistanceFromNearestHome(homeLocations, {
+						latitude: parkrun.latitude,
+						longitude: parkrun.longitude,
+					});
 
 					return (
 						<Marker
@@ -185,6 +191,11 @@ export default function LocationsMap({ homeLocations }: LocationsMapProps) {
 										<p className="text-xs text-zinc-600">
 											{parkrun.locationLabel}
 										</p>
+										{distanceFromHome !== null && (
+											<p className="text-xs text-zinc-600">
+												{distanceFromHome.toFixed(1)} km from home
+											</p>
+										)}
 									</div>
 								</Popup>
 							)}
