@@ -79,18 +79,21 @@ export default function LocationsMap({ homeLocations }: LocationsMapProps) {
 
 	if (!mapboxToken) {
 		return (
-			<div className="flex items-center justify-center min-h-screen bg-zinc-50 dark:bg-black">
+			<div className="flex items-center justify-center w-full h-full bg-neutral-50 dark:bg-neutral-900">
 				<div className="text-center">
-					<h1 className="text-2xl font-bold text-red-600 mb-2">
+					<h1
+						className="text-2xl font-bold mb-2"
+						style={{ color: "var(--color-parkrun-red)" }}
+					>
 						Configuration Error
 					</h1>
-					<p className="text-zinc-600 dark:text-zinc-400">
+					<p className="text-neutral-600 dark:text-neutral-400">
 						Mapbox token is not configured. Please set{" "}
-						<code className="bg-zinc-200 dark:bg-zinc-800 px-2 py-1 rounded">
+						<code className="bg-neutral-200 dark:bg-neutral-800 px-2 py-1 rounded">
 							NEXT_PUBLIC_MAPBOX_TOKEN
 						</code>{" "}
 						in{" "}
-						<code className="bg-zinc-200 dark:bg-zinc-800 px-2 py-1 rounded">
+						<code className="bg-neutral-200 dark:bg-neutral-800 px-2 py-1 rounded">
 							.env.local
 						</code>
 					</p>
@@ -101,9 +104,9 @@ export default function LocationsMap({ homeLocations }: LocationsMapProps) {
 
 	if (loading) {
 		return (
-			<div className="flex items-center justify-center min-h-screen bg-zinc-50 dark:bg-black">
+			<div className="flex items-center justify-center w-full h-full bg-neutral-50 dark:bg-neutral-900">
 				<div className="text-center">
-					<p className="text-lg text-zinc-600 dark:text-zinc-400">
+					<p className="text-lg text-neutral-600 dark:text-neutral-400">
 						Loading parkruns...
 					</p>
 				</div>
@@ -113,17 +116,22 @@ export default function LocationsMap({ homeLocations }: LocationsMapProps) {
 
 	if (error) {
 		return (
-			<div className="flex items-center justify-center min-h-screen bg-zinc-50 dark:bg-black">
+			<div className="flex items-center justify-center w-full h-full bg-neutral-50 dark:bg-neutral-900">
 				<div className="text-center">
-					<h1 className="text-2xl font-bold text-red-600 mb-2">Error</h1>
-					<p className="text-zinc-600 dark:text-zinc-400">{error}</p>
+					<h1
+						className="text-2xl font-bold mb-2"
+						style={{ color: "var(--color-parkrun-red)" }}
+					>
+						Error
+					</h1>
+					<p className="text-neutral-600 dark:text-neutral-400">{error}</p>
 				</div>
 			</div>
 		);
 	}
 
 	return (
-		<div className="w-full h-screen">
+		<div className="w-full h-full">
 			<Map
 				initialViewState={{
 					longitude: -2,
@@ -164,7 +172,7 @@ export default function LocationsMap({ homeLocations }: LocationsMapProps) {
 								onMouseLeave={() => setHoveredMarker(null)}
 							>
 								<svg
-									className={`w-8 h-8 drop-shadow-md ${isCompleted ? "text-yellow-400" : "text-blue-600"}`}
+									className={`w-8 h-8 drop-shadow-md ${isCompleted ? "text-yellow-400" : "text-sky-600"}`}
 									fill="currentColor"
 									viewBox="0 0 20 20"
 								>
@@ -185,14 +193,14 @@ export default function LocationsMap({ homeLocations }: LocationsMapProps) {
 									closeButton={false}
 								>
 									<div className="p-2">
-										<h3 className="font-semibold text-sm text-zinc-900">
+										<h3 className="font-semibold text-sm text-neutral-900 dark:text-neutral-100">
 											{parkrun.name}
 										</h3>
-										<p className="text-xs text-zinc-600">
+										<p className="text-xs text-neutral-600 dark:text-neutral-400">
 											{parkrun.locationLabel}
 										</p>
 										{distanceFromHome !== null && (
-											<p className="text-xs text-zinc-600">
+											<p className="text-xs text-neutral-600 dark:text-neutral-400">
 												{distanceFromHome.toFixed(1)} km from home
 											</p>
 										)}
@@ -228,8 +236,9 @@ export default function LocationsMap({ homeLocations }: LocationsMapProps) {
 								onMouseLeave={() => setHoveredMarker(null)}
 							>
 								<svg
-									className="w-8 h-8 drop-shadow-md text-orange-500"
+									className="w-8 h-8 drop-shadow-md"
 									fill="currentColor"
+									style={{ color: "var(--color-parkrun-orange)" }}
 									viewBox="0 0 20 20"
 								>
 									<path
@@ -249,7 +258,7 @@ export default function LocationsMap({ homeLocations }: LocationsMapProps) {
 									closeButton={false}
 								>
 									<div className="p-2">
-										<h3 className="font-semibold text-sm text-zinc-900">
+										<h3 className="font-semibold text-sm text-neutral-900 dark:text-neutral-100">
 											Home
 										</h3>
 									</div>
@@ -259,15 +268,6 @@ export default function LocationsMap({ homeLocations }: LocationsMapProps) {
 					);
 				})}
 			</Map>
-
-			<div className="absolute top-4 left-4 bg-white dark:bg-zinc-900 rounded-lg shadow-md p-4 max-w-xs z-10">
-				<h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 mb-2">
-					UK Parkruns
-				</h1>
-				<p className="text-sm text-zinc-600 dark:text-zinc-400">
-					{parkruns.length} locations found. Hover over pins to see details.
-				</p>
-			</div>
 		</div>
 	);
 }
