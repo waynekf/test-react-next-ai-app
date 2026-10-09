@@ -15,3 +15,12 @@
 - Maintain accessible contrast ratios and ensure dark mode colors are defined alongside light mode.
 - When global theme values are needed, define them centrally in `app/globals.css`.
 - Use the Skipton Building Society website as a reference for branding and design guidelines.
+- When the user asks to create a pull request, prefer creating it directly with GitHub tooling instead of stopping at a browser page when possible.
+- Assume the default pull request base branch is `main` unless the user specifies a different base.
+- Before creating a pull request, run `git status --short --branch` and inspect the branch diff against the base branch with `git diff --stat origin/main...HEAD`.
+- Before creating a pull request, run `npm run lint` and, when the change could affect the production app, `npm run build`; report unrelated pre-existing failures clearly.
+- If the working tree contains relevant uncommitted changes for the requested pull request, commit them before creating the pull request.
+- Push the current feature branch with `git push -u origin <branch>` before creating the pull request.
+- When GitHub CLI is available and authenticated, create the pull request with `gh pr create --base main --head <branch> --title "<title>" --body "<body>"`.
+- If GitHub CLI is unavailable, unauthenticated, or cannot complete the workflow, fall back to the best available GitHub mechanism, such as opening the compare or pull request URL, and state the exact remaining manual step.
+- Never create or merge a pull request from `main` or `master`.
