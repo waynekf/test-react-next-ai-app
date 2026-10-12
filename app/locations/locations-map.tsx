@@ -45,7 +45,8 @@ interface LocationsMapProps {
 	statusFilter: StatusFilter;
 	viewState?: ViewState;
 	onViewStateChange?: (viewState: ViewState) => void;
-	onResetViewRequested?: () => void;
+	selectedParkrunId: string | null;
+	onParkrunSelect: (parkrun: Parkrun) => void;
 }
 
 export default function LocationsMap({
@@ -57,6 +58,8 @@ export default function LocationsMap({
 	statusFilter,
 	viewState: externalViewState,
 	onViewStateChange,
+	selectedParkrunId,
+	onParkrunSelect,
 }: LocationsMapProps) {
 	const [hoveredMarker, setHoveredMarker] = useState<HoveredMarker>(null);
 	const [internalViewState, setInternalViewState] =
@@ -164,6 +167,7 @@ export default function LocationsMap({
 						const isHovered =
 							hoveredMarker?.type === "parkrun" &&
 							hoveredMarker.id === parkrun.id;
+						const isSelected = selectedParkrunId === parkrun.id;
 						const distanceFromHome = getDistanceFromNearestHome(homeLocations, {
 							latitude: parkrun.latitude,
 							longitude: parkrun.longitude,
@@ -176,20 +180,18 @@ export default function LocationsMap({
 								latitude={parkrun.latitude}
 								onClick={(e) => {
 									e.originalEvent.stopPropagation();
-									setHoveredMarker(
-										isHovered ? null : { type: "parkrun", id: parkrun.id },
-									);
+									onParkrunSelect(parkrun);
 								}}
 							>
 								<div
-									className="cursor-pointer"
+									className={`relative cursor-pointer transition-transform ${isHovered || isSelected ? "scale-110" : ""}`}
 									onMouseEnter={() =>
 										setHoveredMarker({ type: "parkrun", id: parkrun.id })
 									}
 									onMouseLeave={() => setHoveredMarker(null)}
 								>
 									<svg
-										className={`w-8 h-8 drop-shadow-md ${isCompleted ? "text-yellow-400" : "text-sky-600"}`}
+										className={`h-8 w-8 drop-shadow-md ${isSelected ? "text-(--color-skipton-primary)" : isCompleted ? "text-yellow-400" : "text-sky-600"}`}
 										fill="currentColor"
 										viewBox="0 0 20 20"
 									>
@@ -199,9 +201,12 @@ export default function LocationsMap({
 											clipRule="evenodd"
 										/>
 									</svg>
+									{isSelected && (
+										<div className="absolute inset-0 rounded-full ring-2 ring-(--color-skipton-secondary) ring-offset-2 ring-offset-transparent" />
+									)}
 								</div>
 
-								{isHovered && (
+								{(isHovered || isSelected) && (
 									<Popup
 										longitude={parkrun.longitude}
 										latitude={parkrun.latitude}
