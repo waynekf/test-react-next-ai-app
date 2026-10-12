@@ -1,10 +1,12 @@
 "use client";
 
 import "mapbox-gl/dist/mapbox-gl.css";
-import { useState } from "react";
-import { Map, Marker, Popup } from "react-map-gl/mapbox";
+import { useCallback, useState } from "react";
+import { Map, Marker, Popup, ViewStateChangeEvent } from "react-map-gl/mapbox";
 
 import { getDistanceFromNearestHome } from "./location-distance";
+
+const DEFAULT_MAP_VIEW = { longitude: -2, latitude: 54, zoom: 6 };
 
 interface Parkrun {
 	id: string;
@@ -21,6 +23,12 @@ interface HomeLocation {
 	longitude: number;
 }
 
+interface ViewState {
+	longitude: number;
+	latitude: number;
+	zoom: number;
+}
+
 type HoveredMarker =
 	| { type: "parkrun"; id: string }
 	| { type: "home"; id: string }
@@ -35,6 +43,9 @@ interface LocationsMapProps {
 	error: string | null;
 	homeLocations: HomeLocation[];
 	statusFilter: StatusFilter;
+	viewState?: ViewState;
+	onViewStateChange?: (viewState: ViewState) => void;
+	onResetViewRequested?: () => void;
 }
 
 export default function LocationsMap({
@@ -44,8 +55,31 @@ export default function LocationsMap({
 	error,
 	homeLocations,
 	statusFilter,
+	viewState: externalViewState,
+	onViewStateChange,
 }: LocationsMapProps) {
 	const [hoveredMarker, setHoveredMarker] = useState<HoveredMarker>(null);
+	const [internalViewState, setInternalViewState] =
+		useState<ViewState>(DEFAULT_MAP_VIEW);
+
+	const currentViewState = externalViewState ?? internalViewState;
+
+	const handleViewStateChange = useCallback(
+		(event: ViewStateChangeEvent) => {
+			const newViewState = {
+				longitude: event.viewState.longitude,
+				latitude: event.viewState.latitude,
+				zoom: event.viewState.zoom,
+			};
+
+			if (!externalViewState) {
+				setInternalViewState(newViewState);
+			}
+
+			onViewStateChange?.(newViewState);
+		},
+		[externalViewState, onViewStateChange],
+	);
 
 	const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 
@@ -105,11 +139,8 @@ export default function LocationsMap({
 	return (
 		<div className="w-full h-full">
 			<Map
-				initialViewState={{
-					longitude: -2,
-					latitude: 54,
-					zoom: 6,
-				}}
+				{...currentViewState}
+				onMove={handleViewStateChange}
 				style={{ width: "100%", height: "100%" }}
 				mapStyle="mapbox://styles/mapbox/streets-v12"
 				mapboxAccessToken={mapboxToken}

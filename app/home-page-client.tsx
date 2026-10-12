@@ -1,9 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import LocationsMap from "./locations/locations-map";
 import OverviewCompletionSummary from "./overview-completion-summary";
+
+const DEFAULT_MAP_VIEW = { longitude: -2, latitude: 54, zoom: 6 };
+const DEFAULT_DISTANCE_FILTER = 100;
 
 interface HomeLocation {
 	id: string;
@@ -20,6 +23,12 @@ interface Parkrun {
 	slug: string;
 }
 
+interface ViewState {
+	longitude: number;
+	latitude: number;
+	zoom: number;
+}
+
 type StatusFilter = "all" | "completed" | "notCompleted";
 
 interface HomePageClientProps {
@@ -28,6 +37,10 @@ interface HomePageClientProps {
 
 export default function HomePageClient({ homeLocations }: HomePageClientProps) {
 	const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+	const [distanceFilter, setDistanceFilter] = useState<number>(
+		DEFAULT_DISTANCE_FILTER,
+	);
+	const [mapViewState, setMapViewState] = useState<ViewState>(DEFAULT_MAP_VIEW);
 	const [parkruns, setParkruns] = useState<Parkrun[]>([]);
 	const [completedParkruns, setCompletedParkruns] = useState<Set<string>>(
 		() => new Set(),
@@ -73,6 +86,16 @@ export default function HomePageClient({ homeLocations }: HomePageClientProps) {
 		fetchParkruns();
 	}, []);
 
+	const handleMapViewStateChange = useCallback((viewState: ViewState) => {
+		setMapViewState(viewState);
+	}, []);
+
+	const handleResetView = useCallback(() => {
+		setStatusFilter("all");
+		setDistanceFilter(DEFAULT_DISTANCE_FILTER);
+		setMapViewState(DEFAULT_MAP_VIEW);
+	}, []);
+
 	return (
 		<div className="flex flex-col h-screen bg-neutral-50 dark:bg-neutral-900">
 			<header className="h-[10%] border-b border-neutral-200 bg-white px-6 shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
@@ -103,6 +126,8 @@ export default function HomePageClient({ homeLocations }: HomePageClientProps) {
 						error={parkrunsError}
 						homeLocations={homeLocations}
 						statusFilter={statusFilter}
+						viewState={mapViewState}
+						onViewStateChange={handleMapViewStateChange}
 					/>
 				</div>
 
@@ -167,7 +192,10 @@ export default function HomePageClient({ homeLocations }: HomePageClientProps) {
 										type="range"
 										min="0"
 										max="100"
-										defaultValue="100"
+										value={distanceFilter}
+										onChange={(event) =>
+											setDistanceFilter(Number(event.target.value))
+										}
 										className="w-full"
 									/>
 								</div>
@@ -213,7 +241,10 @@ export default function HomePageClient({ homeLocations }: HomePageClientProps) {
 								Controls
 							</h2>
 							<div className="space-y-2">
-								<button className="w-full rounded bg-neutral-100 px-3 py-2 text-sm font-medium text-neutral-900 transition hover:bg-neutral-200 dark:bg-neutral-700 dark:text-neutral-50 dark:hover:bg-neutral-600">
+								<button
+									onClick={handleResetView}
+									className="w-full rounded bg-neutral-100 px-3 py-2 text-sm font-medium text-neutral-900 transition hover:bg-neutral-200 dark:bg-neutral-700 dark:text-neutral-50 dark:hover:bg-neutral-600"
+								>
 									Reset View
 								</button>
 								<button className="w-full rounded bg-neutral-100 px-3 py-2 text-sm font-medium text-neutral-900 transition hover:bg-neutral-200 dark:bg-neutral-700 dark:text-neutral-50 dark:hover:bg-neutral-600">
@@ -224,6 +255,6 @@ export default function HomePageClient({ homeLocations }: HomePageClientProps) {
 					</div>
 				</aside>
 			</div>
-		</div>
+			</div>
 	);
 }
