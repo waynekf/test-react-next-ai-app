@@ -26,11 +26,17 @@ type HoveredMarker =
 	| { type: "home"; id: string }
 	| null;
 
+type StatusFilter = "all" | "completed" | "notCompleted";
+
 interface LocationsMapProps {
 	homeLocations: HomeLocation[];
+	statusFilter: StatusFilter;
 }
 
-export default function LocationsMap({ homeLocations }: LocationsMapProps) {
+export default function LocationsMap({
+	homeLocations,
+	statusFilter,
+}: LocationsMapProps) {
 	const [parkruns, setParkruns] = useState<Parkrun[]>([]);
 	const [completedParkruns, setCompletedParkruns] = useState<Set<string>>(
 		() => new Set(),
@@ -142,74 +148,88 @@ export default function LocationsMap({ homeLocations }: LocationsMapProps) {
 				mapStyle="mapbox://styles/mapbox/streets-v12"
 				mapboxAccessToken={mapboxToken}
 			>
-				{parkruns.map((parkrun) => {
-					const isCompleted = completedParkruns.has(parkrun.name);
-					const isHovered =
-						hoveredMarker?.type === "parkrun" &&
-						hoveredMarker.id === parkrun.id;
-					const distanceFromHome = getDistanceFromNearestHome(homeLocations, {
-						latitude: parkrun.latitude,
-						longitude: parkrun.longitude,
-					});
+				{parkruns
+					.filter((parkrun) => {
+						const isCompleted = completedParkruns.has(parkrun.name);
 
-					return (
-						<Marker
-							key={parkrun.id}
-							longitude={parkrun.longitude}
-							latitude={parkrun.latitude}
-							onClick={(e) => {
-								e.originalEvent.stopPropagation();
-								setHoveredMarker(
-									isHovered ? null : { type: "parkrun", id: parkrun.id },
-								);
-							}}
-						>
-							<div
-								className="cursor-pointer"
-								onMouseEnter={() =>
-									setHoveredMarker({ type: "parkrun", id: parkrun.id })
-								}
-								onMouseLeave={() => setHoveredMarker(null)}
+						if (statusFilter === "completed") {
+							return isCompleted;
+						}
+
+						if (statusFilter === "notCompleted") {
+							return !isCompleted;
+						}
+
+						return true;
+					})
+					.map((parkrun) => {
+						const isCompleted = completedParkruns.has(parkrun.name);
+						const isHovered =
+							hoveredMarker?.type === "parkrun" &&
+							hoveredMarker.id === parkrun.id;
+						const distanceFromHome = getDistanceFromNearestHome(homeLocations, {
+							latitude: parkrun.latitude,
+							longitude: parkrun.longitude,
+						});
+
+						return (
+							<Marker
+								key={parkrun.id}
+								longitude={parkrun.longitude}
+								latitude={parkrun.latitude}
+								onClick={(e) => {
+									e.originalEvent.stopPropagation();
+									setHoveredMarker(
+										isHovered ? null : { type: "parkrun", id: parkrun.id },
+									);
+								}}
 							>
-								<svg
-									className={`w-8 h-8 drop-shadow-md ${isCompleted ? "text-yellow-400" : "text-sky-600"}`}
-									fill="currentColor"
-									viewBox="0 0 20 20"
+								<div
+									className="cursor-pointer"
+									onMouseEnter={() =>
+										setHoveredMarker({ type: "parkrun", id: parkrun.id })
+									}
+									onMouseLeave={() => setHoveredMarker(null)}
 								>
-									<path
-										fillRule="evenodd"
-										d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
-										clipRule="evenodd"
-									/>
-								</svg>
-							</div>
+									<svg
+										className={`w-8 h-8 drop-shadow-md ${isCompleted ? "text-yellow-400" : "text-sky-600"}`}
+										fill="currentColor"
+										viewBox="0 0 20 20"
+									>
+										<path
+											fillRule="evenodd"
+											d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
+											clipRule="evenodd"
+										/>
+									</svg>
+								</div>
 
-							{isHovered && (
-								<Popup
-									longitude={parkrun.longitude}
-									latitude={parkrun.latitude}
-									anchor="bottom"
-									onClose={() => setHoveredMarker(null)}
-									closeButton={false}
-								>
-									<div className="p-2">
-										<h3 className="font-semibold text-sm text-neutral-900 dark:text-neutral-100">
-											{parkrun.name}
-										</h3>
-										<p className="text-xs text-neutral-600 dark:text-neutral-400">
-											{parkrun.locationLabel}
-										</p>
-										{distanceFromHome !== null && (
+								{isHovered && (
+									<Popup
+										longitude={parkrun.longitude}
+										latitude={parkrun.latitude}
+										anchor="bottom"
+										onClose={() => setHoveredMarker(null)}
+										closeButton={false}
+									>
+										<div className="p-2">
+											<h3 className="font-semibold text-sm text-neutral-900 dark:text-neutral-100">
+												{parkrun.name}
+											</h3>
 											<p className="text-xs text-neutral-600 dark:text-neutral-400">
-												{distanceFromHome.toFixed(1)} km from home
+												{parkrun.locationLabel}
 											</p>
-										)}
-									</div>
-								</Popup>
-							)}
-						</Marker>
-					);
-				})}
+											{distanceFromHome !== null && (
+												<p className="text-xs text-neutral-600 dark:text-neutral-400">
+													{distanceFromHome.toFixed(1)} km from home
+												</p>
+											)}
+										</div>
+									</Popup>
+								)}
+							</Marker>
+						);
+					})}
 
 				{homeLocations.map((homeLocation) => {
 					const isHovered =
