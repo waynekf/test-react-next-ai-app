@@ -93,6 +93,36 @@ export default function Home() {
 
 						<section>
 							<h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-900 dark:text-neutral-50">
+								Filters
+							</h2>
+							<div className="space-y-3">
+								<div>
+									<label className="mb-1 block text-xs font-medium text-neutral-600 dark:text-neutral-400">
+										Status
+									</label>
+									<select className="w-full rounded border border-neutral-300 bg-neutral-50 px-2 py-1 text-sm text-neutral-900 dark:border-neutral-600 dark:bg-neutral-700 dark:text-neutral-50">
+										<option>All</option>
+										<option>Completed</option>
+										<option>Not Completed</option>
+									</select>
+								</div>
+								<div>
+									<label className="mb-1 block text-xs font-medium text-neutral-600 dark:text-neutral-400">
+										Distance (km)
+									</label>
+									<input
+										type="range"
+										min="0"
+										max="100"
+										defaultValue="100"
+										className="w-full"
+									/>
+								</div>
+							</div>
+						</section>
+
+						<section>
+							<h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-900 dark:text-neutral-50">
 								Legend
 							</h2>
 							<div className="space-y-2 text-sm">
@@ -122,6 +152,20 @@ export default function Home() {
 										Home location
 									</span>
 								</div>
+							</div>
+						</section>
+
+						<section>
+							<h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-900 dark:text-neutral-50">
+								Controls
+							</h2>
+							<div className="space-y-2">
+								<button className="w-full rounded bg-neutral-100 px-3 py-2 text-sm font-medium text-neutral-900 transition hover:bg-neutral-200 dark:bg-neutral-700 dark:text-neutral-50 dark:hover:bg-neutral-600">
+									Reset View
+								</button>
+								<button className="w-full rounded bg-neutral-100 px-3 py-2 text-sm font-medium text-neutral-900 transition hover:bg-neutral-200 dark:bg-neutral-700 dark:text-neutral-50 dark:hover:bg-neutral-600">
+									Export Data
+								</button>
 							</div>
 						</section>
 					</div>

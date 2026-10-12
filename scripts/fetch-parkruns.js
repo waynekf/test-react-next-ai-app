@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+/* eslint-disable @typescript-eslint/no-require-imports */
+
 const https = require("https");
 const fs = require("fs");
 const path = require("path");
@@ -71,7 +73,7 @@ function fetchUrl(urlString, retries = 3) {
 		let match;
 
 		while ((match = eventLinkRegex.exec(html)) !== null) {
-			const [, location, eventText] = match;
+			const [, , eventText] = match;
 			const cleanText = eventText
 				.replace(/<[^>]*>/g, "")
 				.replace(/&nbsp;/g, " ")
