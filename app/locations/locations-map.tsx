@@ -1,7 +1,7 @@
 "use client";
 
 import "mapbox-gl/dist/mapbox-gl.css";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Map, Marker, Popup } from "react-map-gl/mapbox";
 
 import { getDistanceFromNearestHome } from "./location-distance";
@@ -29,59 +29,25 @@ type HoveredMarker =
 type StatusFilter = "all" | "completed" | "notCompleted";
 
 interface LocationsMapProps {
+	parkruns: Parkrun[];
+	completedParkruns: Set<string>;
+	loading: boolean;
+	error: string | null;
 	homeLocations: HomeLocation[];
 	statusFilter: StatusFilter;
 }
 
 export default function LocationsMap({
+	parkruns,
+	completedParkruns,
+	loading,
+	error,
 	homeLocations,
 	statusFilter,
 }: LocationsMapProps) {
-	const [parkruns, setParkruns] = useState<Parkrun[]>([]);
-	const [completedParkruns, setCompletedParkruns] = useState<Set<string>>(
-		() => new Set(),
-	);
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState<string | null>(null);
 	const [hoveredMarker, setHoveredMarker] = useState<HoveredMarker>(null);
 
 	const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
-
-	useEffect(() => {
-		const fetchParkruns = async () => {
-			try {
-				setLoading(true);
-				const [parkrunsResponse, completedResponse] = await Promise.all([
-					fetch("/api/parkruns"),
-					fetch("/api/parkruns/completed"),
-				]);
-
-				if (!parkrunsResponse.ok) {
-					throw new Error(`API error: ${parkrunsResponse.status}`);
-				}
-
-				if (!completedResponse.ok) {
-					throw new Error(`API error: ${completedResponse.status}`);
-				}
-
-				const [parkrunData, completedData] = await Promise.all([
-					parkrunsResponse.json() as Promise<Parkrun[]>,
-					completedResponse.json() as Promise<string[]>,
-				]);
-
-				setParkruns(parkrunData);
-				setCompletedParkruns(new Set(completedData));
-			} catch (err) {
-				setError(
-					err instanceof Error ? err.message : "Failed to fetch parkruns",
-				);
-			} finally {
-				setLoading(false);
-			}
-		};
-
-		fetchParkruns();
-	}, []);
 
 	if (!mapboxToken) {
 		return (

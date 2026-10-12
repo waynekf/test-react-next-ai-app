@@ -1,13 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import LocationsMap from "./locations/locations-map";
+import OverviewCompletionSummary from "./overview-completion-summary";
 
 interface HomeLocation {
 	id: string;
 	latitude: number;
 	longitude: number;
+}
+
+interface Parkrun {
+	id: string;
+	name: string;
+	latitude: number;
+	longitude: number;
+	locationLabel: string;
+	slug: string;
 }
 
 type StatusFilter = "all" | "completed" | "notCompleted";
@@ -18,6 +28,50 @@ interface HomePageClientProps {
 
 export default function HomePageClient({ homeLocations }: HomePageClientProps) {
 	const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+	const [parkruns, setParkruns] = useState<Parkrun[]>([]);
+	const [completedParkruns, setCompletedParkruns] = useState<Set<string>>(
+		() => new Set(),
+	);
+	const [loadingParkruns, setLoadingParkruns] = useState(true);
+	const [parkrunsError, setParkrunsError] = useState<string | null>(null);
+
+	useEffect(() => {
+		const fetchParkruns = async () => {
+			try {
+				setLoadingParkruns(true);
+				setParkrunsError(null);
+
+				const [parkrunsResponse, completedResponse] = await Promise.all([
+					fetch("/api/parkruns"),
+					fetch("/api/parkruns/completed"),
+				]);
+
+				if (!parkrunsResponse.ok) {
+					throw new Error(`API error: ${parkrunsResponse.status}`);
+				}
+
+				if (!completedResponse.ok) {
+					throw new Error(`API error: ${completedResponse.status}`);
+				}
+
+				const [parkrunData, completedData] = await Promise.all([
+					parkrunsResponse.json() as Promise<Parkrun[]>,
+					completedResponse.json() as Promise<string[]>,
+				]);
+
+				setParkruns(parkrunData);
+				setCompletedParkruns(new Set(completedData));
+			} catch (err) {
+				setParkrunsError(
+					err instanceof Error ? err.message : "Failed to fetch parkruns",
+				);
+			} finally {
+				setLoadingParkruns(false);
+			}
+		};
+
+		fetchParkruns();
+	}, []);
 
 	return (
 		<div className="flex flex-col h-screen bg-neutral-50 dark:bg-neutral-900">
@@ -43,6 +97,10 @@ export default function HomePageClient({ homeLocations }: HomePageClientProps) {
 			<div className="flex flex-1 overflow-hidden">
 				<div className="flex-1 w-3/4">
 					<LocationsMap
+						parkruns={parkruns}
+						completedParkruns={completedParkruns}
+						loading={loadingParkruns}
+						error={parkrunsError}
 						homeLocations={homeLocations}
 						statusFilter={statusFilter}
 					/>
@@ -54,6 +112,12 @@ export default function HomePageClient({ homeLocations }: HomePageClientProps) {
 							<h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-900 dark:text-neutral-50">
 								Overview
 							</h2>
+							<OverviewCompletionSummary
+								parkruns={parkruns}
+								completedParkruns={completedParkruns}
+								loading={loadingParkruns}
+								error={parkrunsError}
+							/>
 							<div className="space-y-2 text-sm">
 								<div className="flex justify-between">
 									<span className="text-neutral-600 dark:text-neutral-400">
