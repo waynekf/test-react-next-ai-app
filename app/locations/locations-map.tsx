@@ -4,7 +4,10 @@ import "mapbox-gl/dist/mapbox-gl.css";
 import { useCallback, useState } from "react";
 import { Map, Marker, Popup, ViewStateChangeEvent } from "react-map-gl/mapbox";
 
-import { getDistanceFromNearestHome } from "./location-distance";
+import {
+	convertKmToMiles,
+	getDistanceFromNearestHome,
+} from "./location-distance";
 
 const DEFAULT_MAP_VIEW = { longitude: -2, latitude: 54, zoom: 6 };
 
@@ -223,7 +226,8 @@ export default function LocationsMap({
 											</p>
 											{distanceFromHome !== null && (
 												<p className="text-xs text-neutral-600 dark:text-neutral-400">
-													{distanceFromHome.toFixed(1)} km from home
+													{convertKmToMiles(distanceFromHome).toFixed(1)} mi
+													from home
 												</p>
 											)}
 										</div>

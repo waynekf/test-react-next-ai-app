@@ -2,7 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { getDistanceFromNearestHome } from "./locations/location-distance";
+import {
+	convertKmToMiles,
+	getDistanceFromNearestHome,
+} from "./locations/location-distance";
 import LocationsMap from "./locations/locations-map";
 import OverviewCompletionSummary from "./overview-completion-summary";
 
@@ -41,7 +44,7 @@ function formatDistance(distanceInKm: number | null) {
 		return "—";
 	}
 
-	return `${distanceInKm.toFixed(1)} km`;
+	return `${convertKmToMiles(distanceInKm).toFixed(1)} mi`;
 }
 
 export default function HomePageClient({ homeLocations }: HomePageClientProps) {
