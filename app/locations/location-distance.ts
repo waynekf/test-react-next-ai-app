@@ -4,6 +4,7 @@ interface Coordinates {
 }
 
 const EARTH_RADIUS_KM = 6371;
+const KM_PER_MILE = 1.609344;
 
 function degreesToRadians(value: number) {
   return (value * Math.PI) / 180;
@@ -24,6 +25,10 @@ export function calculateDistanceInKm(from: Coordinates, to: Coordinates) {
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
   return EARTH_RADIUS_KM * c;
+}
+
+export function convertKmToMiles(distanceInKm: number) {
+  return distanceInKm / KM_PER_MILE;
 }
 
 export function getDistanceFromNearestHome(
