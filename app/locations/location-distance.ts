@@ -31,6 +31,21 @@ export function convertKmToMiles(distanceInKm: number) {
   return distanceInKm / KM_PER_MILE;
 }
 
+export function isWithinDistanceLimit(
+  distanceInKm: number | null,
+  maxDistanceMiles: number | null,
+) {
+  if (maxDistanceMiles === null) {
+    return true;
+  }
+
+  if (distanceInKm === null) {
+    return false;
+  }
+
+  return convertKmToMiles(distanceInKm) <= maxDistanceMiles;
+}
+
 export function getDistanceFromNearestHome(
   homeLocations: Coordinates[],
   parkrun: Coordinates,

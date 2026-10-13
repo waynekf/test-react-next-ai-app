@@ -5,11 +5,16 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
 	convertKmToMiles,
 	getDistanceFromNearestHome,
+	isWithinDistanceLimit,
 } from "./locations/location-distance";
 import LocationsMap from "./locations/locations-map";
 import OverviewCompletionSummary from "./overview-completion-summary";
 
 const DEFAULT_MAP_VIEW = { longitude: -2, latitude: 54, zoom: 6 };
+const MAX_DISTANCE_SLIDER_MIN = 0;
+const MAX_DISTANCE_SLIDER_MAX = 500;
+const MAX_DISTANCE_SLIDER_STEP = 10;
+const DEFAULT_DISTANCE_SLIDER_VALUE = 50;
 
 interface HomeLocation {
 	id: string;
@@ -50,6 +55,7 @@ function formatDistance(distanceInKm: number | null) {
 export default function HomePageClient({ homeLocations }: HomePageClientProps) {
 	const [activeRailTab, setActiveRailTab] = useState<RailTab>("overview");
 	const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+	const [maxDistanceMiles, setMaxDistanceMiles] = useState("");
 	const [mapViewState, setMapViewState] = useState<ViewState>(DEFAULT_MAP_VIEW);
 	const [selectedParkrunId, setSelectedParkrunId] = useState<string | null>(
 		null,
@@ -99,6 +105,25 @@ export default function HomePageClient({ homeLocations }: HomePageClientProps) {
 		fetchParkruns();
 	}, []);
 
+	const normalizedMaxDistanceMiles = useMemo(() => {
+		const trimmedValue = maxDistanceMiles.trim();
+
+		if (trimmedValue === "") {
+			return null;
+		}
+
+		const parsedDistance = Number.parseFloat(trimmedValue);
+
+		if (!Number.isFinite(parsedDistance) || parsedDistance < 0) {
+			return null;
+		}
+
+		return parsedDistance;
+	}, [maxDistanceMiles]);
+
+	const sliderDistanceValue =
+		normalizedMaxDistanceMiles ?? DEFAULT_DISTANCE_SLIDER_VALUE;
+
 	const visibleParkruns = useMemo(() => {
 		return parkruns
 			.map((parkrun) => {
@@ -125,6 +150,12 @@ export default function HomePageClient({ homeLocations }: HomePageClientProps) {
 
 				return true;
 			})
+			.filter((parkrun) =>
+				isWithinDistanceLimit(
+					parkrun.distanceFromHome,
+					normalizedMaxDistanceMiles,
+				),
+			)
 			.sort((first, second) => {
 				const firstDistance =
 					first.distanceFromHome ?? Number.POSITIVE_INFINITY;
@@ -143,7 +174,13 @@ export default function HomePageClient({ homeLocations }: HomePageClientProps) {
 
 				return first.id.localeCompare(second.id);
 			});
-	}, [completedParkruns, homeLocations, parkruns, statusFilter]);
+	}, [
+		completedParkruns,
+		homeLocations,
+		normalizedMaxDistanceMiles,
+		parkruns,
+		statusFilter,
+	]);
 
 	const handleMapViewStateChange = useCallback((viewState: ViewState) => {
 		setMapViewState(viewState);
@@ -160,9 +197,17 @@ export default function HomePageClient({ homeLocations }: HomePageClientProps) {
 
 	const handleResetView = useCallback(() => {
 		setStatusFilter("all");
+		setMaxDistanceMiles("");
 		setSelectedParkrunId(null);
 		setMapViewState(DEFAULT_MAP_VIEW);
 	}, []);
+
+	const handleDistanceLimitToggle = useCallback(
+		(enabled: boolean) => {
+			setMaxDistanceMiles(enabled ? String(sliderDistanceValue) : "");
+		},
+		[sliderDistanceValue],
+	);
 
 	return (
 		<div className="flex flex-col h-screen bg-neutral-50 dark:bg-neutral-900">
@@ -194,6 +239,7 @@ export default function HomePageClient({ homeLocations }: HomePageClientProps) {
 						error={parkrunsError}
 						homeLocations={homeLocations}
 						statusFilter={statusFilter}
+						maxDistanceMiles={normalizedMaxDistanceMiles}
 						viewState={mapViewState}
 						onViewStateChange={handleMapViewStateChange}
 						selectedParkrunId={selectedParkrunId}
@@ -291,6 +337,49 @@ export default function HomePageClient({ homeLocations }: HomePageClientProps) {
 													<option value="completed">Completed</option>
 													<option value="notCompleted">Not completed</option>
 												</select>
+											</div>
+											<div>
+												<label className="mb-1 block text-xs font-medium text-neutral-600 dark:text-neutral-400">
+													Max distance from home (miles)
+												</label>
+												<div className="rounded border border-neutral-300 bg-neutral-50 p-3 dark:border-neutral-600 dark:bg-neutral-700">
+													<div className="flex items-center justify-between gap-3">
+														<label className="flex items-center gap-2 text-sm text-neutral-900 dark:text-neutral-50">
+															<input
+																type="checkbox"
+																checked={maxDistanceMiles !== ""}
+																onChange={(event) =>
+																	handleDistanceLimitToggle(
+																		event.target.checked,
+																	)
+																}
+																className="h-4 w-4 rounded border-neutral-300 text-(--color-skipton-primary) focus:ring-(--color-skipton-primary) dark:border-neutral-500"
+															/>
+															<span>Limit by distance</span>
+														</label>
+														<span className="text-sm font-semibold text-neutral-900 dark:text-neutral-50">
+															{maxDistanceMiles === ""
+																? "Any distance"
+																: `${sliderDistanceValue} mi`}
+														</span>
+													</div>
+													<input
+														type="range"
+														min={MAX_DISTANCE_SLIDER_MIN}
+														max={MAX_DISTANCE_SLIDER_MAX}
+														step={MAX_DISTANCE_SLIDER_STEP}
+														value={sliderDistanceValue}
+														disabled={maxDistanceMiles === ""}
+														onChange={(event) =>
+															setMaxDistanceMiles(event.target.value)
+														}
+														className="mt-3 h-2 w-full cursor-pointer appearance-none rounded-lg bg-neutral-200 accent-(--color-skipton-primary) disabled:cursor-not-allowed disabled:opacity-50 dark:bg-neutral-600"
+													/>
+													<div className="mt-2 flex justify-between text-[11px] text-neutral-500 dark:text-neutral-400">
+														<span>{MAX_DISTANCE_SLIDER_MIN} mi</span>
+														<span>{MAX_DISTANCE_SLIDER_MAX} mi</span>
+													</div>
+												</div>
 											</div>
 										</div>
 									</section>
