@@ -7,6 +7,7 @@ import { Map, Marker, Popup, ViewStateChangeEvent } from "react-map-gl/mapbox";
 import {
 	convertKmToMiles,
 	getDistanceFromNearestHome,
+	isWithinDistanceLimit,
 } from "./location-distance";
 
 const DEFAULT_MAP_VIEW = { longitude: -2, latitude: 54, zoom: 6 };
@@ -46,6 +47,7 @@ interface LocationsMapProps {
 	error: string | null;
 	homeLocations: HomeLocation[];
 	statusFilter: StatusFilter;
+	maxDistanceMiles: number | null;
 	viewState?: ViewState;
 	onViewStateChange?: (viewState: ViewState) => void;
 	selectedParkrunId: string | null;
@@ -59,6 +61,7 @@ export default function LocationsMap({
 	error,
 	homeLocations,
 	statusFilter,
+	maxDistanceMiles,
 	viewState: externalViewState,
 	onViewStateChange,
 	selectedParkrunId,
@@ -154,16 +157,26 @@ export default function LocationsMap({
 				{parkruns
 					.filter((parkrun) => {
 						const isCompleted = completedParkruns.has(parkrun.name);
+						const distanceFromHome = getDistanceFromNearestHome(homeLocations, {
+							latitude: parkrun.latitude,
+							longitude: parkrun.longitude,
+						});
 
 						if (statusFilter === "completed") {
-							return isCompleted;
+							return (
+								isCompleted &&
+								isWithinDistanceLimit(distanceFromHome, maxDistanceMiles)
+							);
 						}
 
 						if (statusFilter === "notCompleted") {
-							return !isCompleted;
+							return (
+								!isCompleted &&
+								isWithinDistanceLimit(distanceFromHome, maxDistanceMiles)
+							);
 						}
 
-						return true;
+						return isWithinDistanceLimit(distanceFromHome, maxDistanceMiles);
 					})
 					.map((parkrun) => {
 						const isCompleted = completedParkruns.has(parkrun.name);
