@@ -1,12 +1,20 @@
 "use client";
 
 import "mapbox-gl/dist/mapbox-gl.css";
-import { useCallback, useState } from "react";
-import { Map, Marker, Popup, ViewStateChangeEvent } from "react-map-gl/mapbox";
+import { useCallback, useMemo, useState } from "react";
+import {
+	Layer,
+	Map,
+	Marker,
+	Popup,
+	Source,
+	ViewStateChangeEvent,
+} from "react-map-gl/mapbox";
 
 import {
 	convertKmToMiles,
 	getDistanceFromNearestHome,
+	createCirclePolygonCoordinates,
 	isWithinDistanceLimit,
 } from "./location-distance";
 
@@ -31,6 +39,20 @@ interface ViewState {
 	longitude: number;
 	latitude: number;
 	zoom: number;
+}
+
+interface CircleFeatureCollection {
+	type: "FeatureCollection";
+	features: Array<{
+		type: "Feature";
+		properties: {
+			id: string;
+		};
+		geometry: {
+			type: "Polygon";
+			coordinates: [number, number][][];
+		};
+	}>;
 }
 
 type HoveredMarker =
@@ -72,6 +94,28 @@ export default function LocationsMap({
 		useState<ViewState>(DEFAULT_MAP_VIEW);
 
 	const currentViewState = externalViewState ?? internalViewState;
+	const distanceLimitCircleData =
+		useMemo<CircleFeatureCollection | null>(() => {
+			if (maxDistanceMiles === null) {
+				return null;
+			}
+
+			return {
+				type: "FeatureCollection",
+				features: homeLocations.map((homeLocation) => ({
+					type: "Feature",
+					properties: {
+						id: homeLocation.id,
+					},
+					geometry: {
+						type: "Polygon",
+						coordinates: [
+							createCirclePolygonCoordinates(homeLocation, maxDistanceMiles),
+						],
+					},
+				})),
+			};
+		}, [homeLocations, maxDistanceMiles]);
 
 	const handleViewStateChange = useCallback(
 		(event: ViewStateChangeEvent) => {
@@ -154,6 +198,31 @@ export default function LocationsMap({
 				mapStyle="mapbox://styles/mapbox/streets-v12"
 				mapboxAccessToken={mapboxToken}
 			>
+				{distanceLimitCircleData && (
+					<Source
+						id="home-distance-limits"
+						type="geojson"
+						data={distanceLimitCircleData}
+					>
+						<Layer
+							id="home-distance-limit-fill"
+							type="fill"
+							paint={{
+								"fill-color": "#00a3e0",
+								"fill-opacity": 0.12,
+							}}
+						/>
+						<Layer
+							id="home-distance-limit-outline"
+							type="line"
+							paint={{
+								"line-color": "#00a3e0",
+								"line-width": 1.5,
+								"line-opacity": 0.4,
+							}}
+						/>
+					</Source>
+				)}
 				{parkruns
 					.filter((parkrun) => {
 						const isCompleted = completedParkruns.has(parkrun.name);
