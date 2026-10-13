@@ -31,6 +31,44 @@ export function convertKmToMiles(distanceInKm: number) {
   return distanceInKm / KM_PER_MILE;
 }
 
+export function convertMilesToKm(distanceInMiles: number) {
+  return distanceInMiles * KM_PER_MILE;
+}
+
+export function createCirclePolygonCoordinates(
+  center: Coordinates,
+  radiusInMiles: number,
+  segments = 64,
+) {
+  const radiusInKm = convertMilesToKm(radiusInMiles);
+  const angularDistance = radiusInKm / EARTH_RADIUS_KM;
+  const centerLatitude = degreesToRadians(center.latitude);
+  const centerLongitude = degreesToRadians(center.longitude);
+  const coordinates: [number, number][] = [];
+
+  for (let index = 0; index <= segments; index += 1) {
+    const bearing = (index / segments) * 2 * Math.PI;
+    const latitude = Math.asin(
+      Math.sin(centerLatitude) * Math.cos(angularDistance) +
+        Math.cos(centerLatitude) * Math.sin(angularDistance) * Math.cos(bearing),
+    );
+    const longitude =
+      centerLongitude +
+      Math.atan2(
+        Math.sin(bearing) * Math.sin(angularDistance) * Math.cos(centerLatitude),
+        Math.cos(angularDistance) -
+          Math.sin(centerLatitude) * Math.sin(latitude),
+      );
+
+    coordinates.push([
+      (((longitude * 180) / Math.PI + 540) % 360) - 180,
+      (latitude * 180) / Math.PI,
+    ]);
+  }
+
+  return coordinates;
+}
+
 export function isWithinDistanceLimit(
   distanceInKm: number | null,
   maxDistanceMiles: number | null,
