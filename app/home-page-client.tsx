@@ -403,9 +403,19 @@ export default function HomePageClient({ homeLocations }: HomePageClientProps) {
 																			: "bg-sky-100 text-sky-900 dark:bg-sky-500/20 dark:text-sky-200"
 																	}`}
 																>
-																	{parkrun.isCompleted
-																		? "Completed"
-																		: "Not completed"}
+																	{parkrun.isCompleted ? (
+																		<>
+																			<span
+																				aria-hidden="true"
+																				className="mr-1 text-sm"
+																			>
+																				🏃
+																			</span>
+																			Completed
+																		</>
+																	) : (
+																		"Not completed"
+																	)}
 																</span>
 															</span>
 															<span className="text-right font-medium text-neutral-900 dark:text-neutral-50">
