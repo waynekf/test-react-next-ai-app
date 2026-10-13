@@ -14,6 +14,15 @@ interface OverviewCompletionSummaryProps {
 	error: string | null;
 }
 
+const completedParkrunsLabel = (
+	<>
+		<span aria-hidden="true" className="mr-1 text-sm">
+			🏃
+		</span>
+		Completed parkruns
+	</>
+);
+
 export default function OverviewCompletionSummary({
 	parkruns,
 	completedParkruns,
@@ -24,7 +33,7 @@ export default function OverviewCompletionSummary({
 		return (
 			<div className="mb-3">
 				<p className="text-xs uppercase tracking-wide text-neutral-600 dark:text-neutral-400">
-					Completed parkruns
+					{completedParkrunsLabel}
 				</p>
 				<p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
 					Loading...
@@ -37,7 +46,7 @@ export default function OverviewCompletionSummary({
 		return (
 			<div className="mb-3">
 				<p className="text-xs uppercase tracking-wide text-neutral-600 dark:text-neutral-400">
-					Completed parkruns
+					{completedParkrunsLabel}
 				</p>
 				<p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
 					Unavailable
@@ -59,7 +68,7 @@ export default function OverviewCompletionSummary({
 	return (
 		<div className="mb-3">
 			<p className="text-xs uppercase tracking-wide text-neutral-600 dark:text-neutral-400">
-				Completed parkruns
+				{completedParkrunsLabel}
 			</p>
 			<p className="mt-1 text-base font-bold text-neutral-900 dark:text-neutral-50">
 				{completedActualParkruns}/{totalActualParkruns} ({completionPercentage}
