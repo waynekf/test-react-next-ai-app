@@ -11,23 +11,16 @@ import {
 	ViewStateChangeEvent,
 } from "react-map-gl/mapbox";
 
+import type { Parkrun } from "../home-page-client";
+
 import {
 	convertKmToMiles,
-	getDistanceFromNearestHome,
 	createCirclePolygonCoordinates,
+	getDistanceFromNearestHome,
 	isWithinDistanceLimit,
 } from "./location-distance";
 
 const DEFAULT_MAP_VIEW = { longitude: -2, latitude: 54, zoom: 6 };
-
-interface Parkrun {
-	id: string;
-	name: string;
-	latitude: number;
-	longitude: number;
-	locationLabel: string;
-	slug: string;
-}
 
 interface HomeLocation {
 	id: string;

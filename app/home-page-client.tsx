@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
 	convertKmToMiles,
@@ -22,13 +22,18 @@ interface HomeLocation {
 	longitude: number;
 }
 
-interface Parkrun {
+export interface Parkrun {
 	id: string;
 	name: string;
+	postcode: string | null;
+	what3words: string | null;
+	courseDescription: string | null;
 	latitude: number;
 	longitude: number;
 	locationLabel: string;
 	slug: string;
+	sourceEventId: number;
+	sourceUrl: string;
 }
 
 interface ViewState {
@@ -39,6 +44,20 @@ interface ViewState {
 
 type StatusFilter = "all" | "completed" | "notCompleted";
 type RailTab = "overview" | "list";
+type ExportScope = "filtered" | "all";
+
+const PARKRUN_EXPORT_HEADERS: Array<keyof Omit<Parkrun, "slug">> = [
+	"id",
+	"name",
+	"postcode",
+	"what3words",
+	"courseDescription",
+	"locationLabel",
+	"latitude",
+	"longitude",
+	"sourceEventId",
+	"sourceUrl",
+];
 
 interface HomePageClientProps {
 	homeLocations: HomeLocation[];
@@ -52,6 +71,40 @@ function formatDistance(distanceInKm: number | null) {
 	return `${convertKmToMiles(distanceInKm).toFixed(1)} mi`;
 }
 
+function escapeCsvValue(value: string | number | null) {
+	if (value === null) {
+		return "";
+	}
+
+	const stringValue = String(value);
+	const escapedValue = stringValue.replaceAll('"', '""');
+
+	return /[",\n\r]/.test(stringValue) ? `"${escapedValue}"` : escapedValue;
+}
+
+function buildParkrunCsv(parkruns: Parkrun[]) {
+	const headerRow = PARKRUN_EXPORT_HEADERS.join(",");
+	const dataRows = parkruns.map((parkrun) =>
+		PARKRUN_EXPORT_HEADERS.map((header) =>
+			escapeCsvValue(parkrun[header]),
+		).join(","),
+	);
+
+	return [headerRow, ...dataRows].join("\r\n");
+}
+
+function downloadCsv(filename: string, csvContent: string) {
+	const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+	const objectUrl = URL.createObjectURL(blob);
+	const link = document.createElement("a");
+
+	link.href = objectUrl;
+	link.download = filename;
+	link.rel = "noopener";
+	link.click();
+	URL.revokeObjectURL(objectUrl);
+}
+
 export default function HomePageClient({ homeLocations }: HomePageClientProps) {
 	const [activeRailTab, setActiveRailTab] = useState<RailTab>("overview");
 	const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
@@ -60,12 +113,15 @@ export default function HomePageClient({ homeLocations }: HomePageClientProps) {
 	const [selectedParkrunId, setSelectedParkrunId] = useState<string | null>(
 		null,
 	);
+	const [exportMenuOpen, setExportMenuOpen] = useState(false);
+	const [exportError, setExportError] = useState<string | null>(null);
 	const [parkruns, setParkruns] = useState<Parkrun[]>([]);
 	const [completedParkruns, setCompletedParkruns] = useState<Set<string>>(
 		() => new Set(),
 	);
 	const [loadingParkruns, setLoadingParkruns] = useState(true);
 	const [parkrunsError, setParkrunsError] = useState<string | null>(null);
+	const exportControlRef = useRef<HTMLDivElement | null>(null);
 
 	useEffect(() => {
 		const fetchParkruns = async () => {
@@ -207,6 +263,51 @@ export default function HomePageClient({ homeLocations }: HomePageClientProps) {
 			setMaxDistanceMiles(enabled ? String(sliderDistanceValue) : "");
 		},
 		[sliderDistanceValue],
+	);
+
+	useEffect(() => {
+		if (!exportMenuOpen) {
+			return;
+		}
+
+		const handlePointerDown = (event: PointerEvent) => {
+			if (
+				exportControlRef.current &&
+				!exportControlRef.current.contains(event.target as Node)
+			) {
+				setExportMenuOpen(false);
+			}
+		};
+
+		document.addEventListener("pointerdown", handlePointerDown);
+
+		return () => {
+			document.removeEventListener("pointerdown", handlePointerDown);
+		};
+	}, [exportMenuOpen]);
+
+	const handleExport = useCallback(
+		(scope: ExportScope) => {
+			try {
+				const parkrunsToExport =
+					scope === "filtered" ? visibleParkruns : parkruns;
+				const csvContent = buildParkrunCsv(parkrunsToExport);
+
+				setExportError(null);
+				downloadCsv(
+					scope === "filtered"
+						? "uk-parkruns-filtered.csv"
+						: "uk-parkruns-all.csv",
+					csvContent,
+				);
+			} catch (error) {
+				setExportError(
+					error instanceof Error ? error.message : "Failed to export CSV",
+				);
+			}
+			setExportMenuOpen(false);
+		},
+		[parkruns, visibleParkruns],
 	);
 
 	return (
@@ -431,9 +532,63 @@ export default function HomePageClient({ homeLocations }: HomePageClientProps) {
 											>
 												Reset View
 											</button>
-											<button className="w-full rounded bg-neutral-100 px-3 py-2 text-sm font-medium text-neutral-900 transition hover:bg-neutral-200 dark:bg-neutral-700 dark:text-neutral-50 dark:hover:bg-neutral-600">
-												Export Data
-											</button>
+											<div ref={exportControlRef} className="relative">
+												<div className="inline-flex w-full overflow-hidden rounded-full border border-neutral-300 bg-neutral-100 shadow-sm dark:border-neutral-600 dark:bg-neutral-700">
+													<button
+														type="button"
+														onClick={() => handleExport("filtered")}
+														className="flex-1 px-3 py-2 text-sm font-medium text-neutral-900 transition hover:bg-neutral-200 dark:text-neutral-50 dark:hover:bg-neutral-600"
+													>
+														Export Data
+													</button>
+													<button
+														type="button"
+														aria-label="Open export options"
+														aria-haspopup="menu"
+														aria-expanded={exportMenuOpen}
+														onClick={() =>
+															setExportMenuOpen((current) => !current)
+														}
+														className="flex h-auto items-center border-l border-neutral-300 px-2 text-neutral-700 transition hover:bg-neutral-200 dark:border-neutral-600 dark:text-neutral-200 dark:hover:bg-neutral-600"
+													>
+														<span
+															aria-hidden="true"
+															className="text-xs leading-none"
+														>
+															▾
+														</span>
+													</button>
+												</div>
+												{exportMenuOpen ? (
+													<div
+														role="menu"
+														aria-label="Export data options"
+														className="absolute left-0 top-full z-20 mt-2 min-w-full overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-lg dark:border-neutral-700 dark:bg-neutral-800"
+													>
+														<button
+															type="button"
+															role="menuitem"
+															onClick={() => handleExport("filtered")}
+															className="block w-full px-3 py-2 text-left text-sm text-neutral-900 transition hover:bg-neutral-100 dark:text-neutral-50 dark:hover:bg-neutral-700"
+														>
+															Export filtered
+														</button>
+														<button
+															type="button"
+															role="menuitem"
+															onClick={() => handleExport("all")}
+															className="block w-full px-3 py-2 text-left text-sm text-neutral-900 transition hover:bg-neutral-100 dark:text-neutral-50 dark:hover:bg-neutral-700"
+														>
+															Export all
+														</button>
+													</div>
+												) : null}
+												{exportError ? (
+													<p className="mt-2 text-xs text-red-600 dark:text-red-400">
+														{exportError}
+													</p>
+												) : null}
+											</div>
 										</div>
 									</section>
 								</div>
