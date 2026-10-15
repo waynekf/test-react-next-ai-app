@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Lesson 0001: Marker and popup behavior</title>
+		<link rel="stylesheet" href="../assets/course.css" />
+	</head>
+	<body>
+		<main>
+			<header class="hero">
+				<div class="kicker">Lesson 0001</div>
+				<h1>Marker and popup behavior in this project</h1>
+				<p class="lead">
+					Goal: make you confident changing marker visuals, popup placement, and
+					popup open or close rules in the existing Parkrun map. This lesson
+					stays inside the live implementation in
+					<span class="code">app/locations/locations-map.tsx</span>.
+				</p>
+				<div class="chips">
+					<div class="chip">
+						<strong>You will learn</strong>where marker DOM lives
+					</div>
+					<div class="chip">
+						<strong>You will learn</strong>what decides whether a popup exists
+					</div>
+					<div class="chip">
+						<strong>You will learn</strong>which prop changes placement vs
+						behavior
+					</div>
+				</div>
+			</header>
+
+			<section class="card">
+				<div class="kicker">Mission link</div>
+				<p>
+					Your mission is not “learn Mapbox in general.” It is narrower and more
+					useful: confidently edit the marker and popup behavior already
+					shipping in this app. That means the first seam to understand is the
+					current React state flow, not the full Mapbox API.
+				</p>
+			</section>
+
+			<section class="card">
+				<div class="kicker">Mental model</div>
+				<h2>The popup is not inside the marker behavior-wise</h2>
+				<p>
+					In this repo, markers and popups are rendered near each other in JSX,
+					but their behavior is split across two decisions:
+				</p>
+				<div class="diagram">
+					<div class="diagram-box">
+						<div class="diagram-label">Step 1</div>
+						<strong>Marker renders</strong>
+						<p>
+							The marker gets a coordinate and custom SVG or div content through
+							<span class="code">&lt;Marker&gt;</span>.
+						</p>
+					</div>
+					<div class="diagram-box">
+						<div class="diagram-label">Step 2</div>
+						<strong>React state changes</strong>
+						<p>
+							Hover updates <span class="code">hoveredMarker</span>. Click sends
+							the selected Parkrun upward through
+							<span class="code">onParkrunSelect</span>.
+						</p>
+					</div>
+					<div class="diagram-box">
+						<div class="diagram-label">Step 3</div>
+						<strong>Popup appears</strong>
+						<p>
+							A conditional decides whether
+							<span class="code">&lt;Popup&gt;</span> exists for that marker.
+						</p>
+					</div>
+				</div>
+				<div class="callout" style="margin-top: 18px">
+					If you remember only one thing from this lesson, remember this: marker
+					styling lives in marker DOM, but popup visibility lives in React state
+					plus a conditional render.
+				</div>
+			</section>
+
+			<section class="card">
+				<div class="kicker">Current behavior</div>
+				<div class="grid-2">
+					<div class="panel">
+						<strong>Parkrun markers</strong>
+						<p>
+							Custom SVG pin. Scale increases on hover or selection. Click
+							selects the Parkrun and recenters the map via parent state.
+						</p>
+					</div>
+					<div class="panel">
+						<strong>Parkrun popups</strong>
+						<p>
+							Shown when a marker is hovered or selected. Current props include
+							<span class="code">anchor=&quot;bottom&quot;</span> and
+							<span class="code">closeButton={false}</span>.
+						</p>
+					</div>
+					<div class="panel">
+						<strong>Home markers</strong>
+						<p>
+							Separate marker branch with its own hover state. Popup shows only
+							on hover for home points.
+						</p>
+					</div>
+					<div class="panel">
+						<strong>Mapbox wrapper</strong>
+						<p>
+							This app uses <span class="code">react-map-gl/mapbox</span>, so
+							the relevant docs are the vis.gl Marker and Popup references
+							first, then native Mapbox examples for intuition.
+						</p>
+					</div>
+				</div>
+			</section>
+
+			<section class="card">
+				<div class="kicker">Change map</div>
+				<h2>When you want to change behavior, start with this table</h2>
+				<table>
+					<thead>
+						<tr>
+							<th>I want to change…</th>
+							<th>First place to edit</th>
+							<th>Likely change</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<td>Pin color, ring, scale, icon</td>
+							<td>Marker child JSX</td>
+							<td>SVG classes, wrapping div, conditional class logic</td>
+						</tr>
+						<tr>
+							<td>Popup position relative to the pin</td>
+							<td>Popup props</td>
+							<td>
+								<span class="code">anchor</span> and
+								<span class="code">offset</span>
+							</td>
+						</tr>
+						<tr>
+							<td>Popup width or shell styling</td>
+							<td>Popup props and inner popup markup</td>
+							<td>
+								<span class="code">maxWidth</span>,
+								<span class="code">className</span>, body layout
+							</td>
+						</tr>
+						<tr>
+							<td>Open on click, not hover</td>
+							<td>State and event handlers</td>
+							<td>
+								Stop setting hover state as the open signal; rely on selection
+								state instead
+							</td>
+						</tr>
+						<tr>
+							<td>Close on background click or map movement</td>
+							<td>Popup options</td>
+							<td>
+								<span class="code">closeOnClick</span>,
+								<span class="code">closeOnMove</span>,
+								<span class="code">onClose</span>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</section>
+
+			<section class="card">
+				<div class="kicker">Worked examples</div>
+				<div class="grid-3">
+					<div class="recipe">
+						<strong>Example 1</strong>
+						<p>“The popup is covering the tip of the pin.”</p>
+						<p class="small">
+							Start with <span class="code">&lt;Popup offset={...} /&gt;</span>,
+							not marker state.
+						</p>
+					</div>
+					<div class="recipe">
+						<strong>Example 2</strong>
+						<p>
+							“Selected markers should stay highlighted after the pointer
+							leaves.”
+						</p>
+						<p class="small">
+							Start with selection state and class logic, not Popup props.
+						</p>
+					</div>
+					<div class="recipe">
+						<strong>Example 3</strong>
+						<p>“Only clicking should open the popup.”</p>
+						<p class="small">
+							Start with the conditional render and hover handlers, not the
+							marker SVG.
+						</p>
+					</div>
+				</div>
+			</section>
+
+			<section class="card">
+				<div class="kicker">Practice</div>
+				<h2>Three quick retrieval checks</h2>
+				<details class="quiz">
+					<summary>
+						1. If the popup should sit 12px above the pin, what do you change
+						first?
+					</summary>
+					<p>
+						Change the popup props: keep the same coordinates, then add or
+						adjust <span class="code">offset</span>. This is a positioning
+						concern, not a state concern. See the
+						<a
+							href="https://visgl.github.io/react-map-gl/docs/api-reference/mapbox/popup"
+							>react-map-gl Popup API</a
+						>.
+					</p>
+				</details>
+				<details class="quiz">
+					<summary>
+						2. If the marker should turn green when selected, what do you change
+						first?
+					</summary>
+					<p>
+						Change the marker child JSX and its conditional classes. The
+						selected state already exists; the visual expression of that state
+						lives inside the marker DOM.
+					</p>
+				</details>
+				<details class="quiz">
+					<summary>
+						3. If hover should no longer open the popup, what do you change
+						first?
+					</summary>
+					<p>
+						Change the open condition and the hover handlers. Right now hover
+						feeds <span class="code">hoveredMarker</span>, and the popup renders
+						when hover or selection is true. Remove hover from the decision,
+						then check whether any hover-only styling should remain.
+					</p>
+				</details>
+			</section>
+
+			<section class="card">
+				<div class="kicker">Tiny exercise</div>
+				<h2>Do one safe change</h2>
+				<p>Try this edit the next time you want hands-on practice:</p>
+				<ol>
+					<li>
+						Add a small popup offset so the Parkrun popup sits a little above
+						the pin.
+					</li>
+					<li>
+						Set a popup max width so longer location labels feel deliberate.
+					</li>
+					<li>
+						Reload the page and verify that hover, click, and close behavior
+						still work.
+					</li>
+				</ol>
+				<div class="callout">
+					Success condition: you can say why this was a Popup change and not a
+					Marker or state change.
+				</div>
+			</section>
+
+			<section class="card">
+				<div class="kicker">Reference</div>
+				<p>
+					Keep the quick sheet nearby:
+					<a href="../reference/mapbox-markers-and-popups.html"
+						>Mapbox markers and popups in this repo</a
+					>.
+				</p>
+			</section>
+
+			<section class="card">
+				<div class="kicker">Primary sources</div>
+				<ul class="tight">
+					<li>
+						<a
+							href="https://visgl.github.io/react-map-gl/docs/api-reference/mapbox/marker"
+							>react-map-gl Marker API</a
+						>
+						for marker props, callbacks, and refs.
+					</li>
+					<li>
+						<a
+							href="https://visgl.github.io/react-map-gl/docs/api-reference/mapbox/popup"
+							>react-map-gl Popup API</a
+						>
+						for popup props like <span class="code">offset</span>,
+						<span class="code">maxWidth</span>, and close behavior.
+					</li>
+					<li>
+						<a href="https://docs.mapbox.com/mapbox-gl-js/example/set-popup/"
+							>Mapbox popup example</a
+						>
+						for the native marker to popup model.
+					</li>
+					<li>
+						<a
+							href="https://docs.mapbox.com/mapbox-gl-js/example/custom-marker-icons/"
+							>Mapbox custom marker example</a
+						>
+						for custom marker DOM patterns and accessibility details.
+					</li>
+				</ul>
+			</section>
+
+			<footer>
+				Ask follow-up questions any time. Good next prompts include: “show me
+				exactly where to change popup offset in this repo” or “quiz me on marker
+				vs popup changes before I edit the file.”
+			</footer>
+		</main>
+	</body>
+</html>
