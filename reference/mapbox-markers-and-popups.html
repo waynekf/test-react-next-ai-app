@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Mapbox Markers and Popups Reference</title>
+		<link rel="stylesheet" href="../assets/course.css" />
+	</head>
+	<body>
+		<main>
+			<header class="hero">
+				<div class="kicker">Reference</div>
+				<h1>Mapbox markers and popups in this repo</h1>
+				<p class="lead">
+					A quick sheet for the current stack:
+					<span class="code">react-map-gl@8.1.3</span> on top of
+					<span class="code">mapbox-gl@3.31.0</span>. Use this when you need to
+					remember where a behavior lives before editing
+					<span class="code">app/locations/locations-map.tsx</span>.
+				</p>
+			</header>
+
+			<section class="card">
+				<div class="kicker">Mental model</div>
+				<div class="grid-3">
+					<div class="panel">
+						<strong>Marker</strong>
+						A geographic anchor plus optional custom DOM. In this repo the SVG
+						pin is the marker content.
+					</div>
+					<div class="panel">
+						<strong>Popup</strong>
+						Separate UI rendered at coordinates. It is shown or hidden by React
+						conditions, not by the marker automatically.
+					</div>
+					<div class="panel">
+						<strong>State</strong>
+						Hover and selection decide whether the popup exists. Marker click
+						forwards selection to the parent.
+					</div>
+				</div>
+			</section>
+
+			<section class="card">
+				<div class="kicker">Edit map</div>
+				<table>
+					<thead>
+						<tr>
+							<th>Goal</th>
+							<th>Edit here</th>
+							<th>What to touch</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<td>Change marker color, size, ring, or animation</td>
+							<td><span class="code">&lt;Marker&gt;</span> child DOM</td>
+							<td>SVG classes, wrapping div classes, or marker child markup</td>
+						</tr>
+						<tr>
+							<td>Change popup location relative to the pin</td>
+							<td><span class="code">&lt;Popup&gt;</span> props</td>
+							<td>
+								<span class="code">anchor</span>,
+								<span class="code">offset</span>
+							</td>
+						</tr>
+						<tr>
+							<td>Change popup width or styling</td>
+							<td>
+								<span class="code">&lt;Popup&gt;</span> props and popup body
+							</td>
+							<td>
+								<span class="code">maxWidth</span>,
+								<span class="code">className</span>, inner markup
+							</td>
+						</tr>
+						<tr>
+							<td>Open popup on click instead of hover</td>
+							<td>React state and event handlers</td>
+							<td>
+								<span class="code">hoveredMarker</span>,
+								<span class="code">selectedParkrunId</span>,
+								<span class="code">onClick</span>, hover handlers
+							</td>
+						</tr>
+						<tr>
+							<td>Close popup when map moves or user clicks elsewhere</td>
+							<td><span class="code">&lt;Popup&gt;</span> other props</td>
+							<td>
+								<span class="code">closeOnClick</span>,
+								<span class="code">closeOnMove</span>,
+								<span class="code">onClose</span>
+							</td>
+						</tr>
+						<tr>
+							<td>Need imperative control</td>
+							<td>React ref to Marker or Popup</td>
+							<td>
+								Use native methods like
+								<span class="code">togglePopup()</span> or
+								<span class="code">trackPointer()</span>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</section>
+
+			<section class="card">
+				<div class="kicker">Current repo behavior</div>
+				<ul class="tight">
+					<li>
+						Parkrun markers render custom SVG pins inside
+						<span class="code">&lt;Marker&gt;</span>.
+					</li>
+					<li>Parkrun popups render when a marker is hovered or selected.</li>
+					<li>Home markers have a separate hover-driven popup.</li>
+					<li>
+						Marker click stops propagation and forwards the selected Parkrun to
+						the parent.
+					</li>
+					<li>
+						The popup body is plain React markup, so content changes are regular
+						JSX changes.
+					</li>
+				</ul>
+			</section>
+
+			<section class="card">
+				<div class="kicker">Useful props</div>
+				<div class="grid-2">
+					<div class="recipe">
+						<strong>Marker props to remember</strong>
+						<p>
+							<span class="code">anchor</span>,
+							<span class="code">offset</span>, <span class="code">color</span>,
+							<span class="code">scale</span>,
+							<span class="code">draggable</span>,
+							<span class="code">onClick</span>
+						</p>
+					</div>
+					<div class="recipe">
+						<strong>Popup props to remember</strong>
+						<p>
+							<span class="code">anchor</span>,
+							<span class="code">offset</span>,
+							<span class="code">maxWidth</span>,
+							<span class="code">closeButton</span>,
+							<span class="code">closeOnClick</span>,
+							<span class="code">closeOnMove</span>,
+							<span class="code">onClose</span>
+						</p>
+					</div>
+				</div>
+			</section>
+
+			<section class="card">
+				<div class="kicker">Primary sources</div>
+				<ul class="tight">
+					<li>
+						<a
+							href="https://visgl.github.io/react-map-gl/docs/api-reference/mapbox/marker"
+							>react-map-gl Marker API</a
+						>
+					</li>
+					<li>
+						<a
+							href="https://visgl.github.io/react-map-gl/docs/api-reference/mapbox/popup"
+							>react-map-gl Popup API</a
+						>
+					</li>
+					<li>
+						<a href="https://docs.mapbox.com/mapbox-gl-js/example/set-popup/"
+							>Mapbox popup example</a
+						>
+					</li>
+					<li>
+						<a
+							href="https://docs.mapbox.com/mapbox-gl-js/example/custom-marker-icons/"
+							>Mapbox custom marker example</a
+						>
+					</li>
+				</ul>
+			</section>
+
+			<footer>
+				Return to the first lesson:
+				<a href="../lessons/0001-marker-and-popup-behavior.html"
+					>Marker and popup behavior in this project</a
+				>
+			</footer>
+		</main>
+	</body>
+</html>
